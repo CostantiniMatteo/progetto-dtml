@@ -1,0 +1,233 @@
+%%%% -*- Mode: LaTeX -*-
+\documentclass[a4paper,12pt,openany,oneside]{article}
+\usepackage{geometry}
+ \geometry{
+ 	a4paper,
+ 	left=25mm,
+ 	top=30mm,
+ 	bottom=40mm,
+ 	right=25mm
+ }
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% Packages AMS
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{url}
+% Simboli matematici aggiuntivi
+\usepackage{stmaryrd}
+\usepackage{verbatim}
+% Per creare l'indice
+\usepackage{index}
+% Per spazi dopo le macro
+\usepackage{xspace}
+% Importazioni e manipolazione di grafica
+\usepackage{graphicx}
+% Per \begin{comment} ... \end{comment}
+\usepackage{comment}
+% Per la spaziatura tra linee
+\usepackage{setspace}
+% Per una migliore resa tipografica con pdflatex
+\usepackage{microtype}
+
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage[final]{pdfpages}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{float}
+\usepackage{helvet}
+\usepackage{subcaption}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\renewcommand{\familydefault}{\sfdefault}
+
+
+\mathchardef\mhyphen="2D % Define a "math hyphen"
+\newcommand\rnumber{\mathop{r\mhyphen number}}
+
+\onehalfspacing
+
+
+
+\title{Esercizio Distance Function Data Technology}
+\author{Matteo Colella, Matteo Angelo Costantini, Dario Gerosa}
+\date{23/02/2018}
+
+
+
+\begin{document}
+%\fontencoding{T1}
+%\fontfamily{palatino}
+%\fontseries{m}
+%\fontshape{it}
+%\fontsize{12}{15}
+\selectfont
+\maketitle
+\pagebreak
+
+Di seguito viene mostrata una soluzione per il problema della creazione della \textit{distance function}, richiesta dall'esercizio facoltativo. È stato deciso di utilizzare una soluzione combinata di distanze avvaldoci di \textit{edit distance} e di \textit{tf-idf}. 
+\\[1em]
+\begin{table}[ht]
+	\small
+	\centering
+	\begin{minipage}{0.5\linewidth}
+		\centering
+		\begin{tabularx}{0.9\textwidth}{l}
+			\toprule
+			IBM Corporation\\
+			AT\&T Corporation\\
+			Microsoft Corporation\\
+			Google Inc\\
+			Repubblica Democratica del Congo\\
+			Repubblica Democratica di Corea\\
+			Repubblica Democratica Tedesca\\
+			Associazione Calcio Milan\\
+			Torino Football Club\\
+			Football Club Internazionale Milano\\
+			\bottomrule
+		\end{tabularx}
+		\captionof{table} {Documenti reference}
+		\label{table:reference}
+	\end{minipage}%
+	\begin{minipage}{0.5\linewidth}
+	\centering
+	\begin{tabularx}{0.55\textwidth}{l}
+		\toprule
+		kongo\\
+		korea\\
+		milna\\
+		intrnazionale\\
+		torino\\
+		repubblica tedesca\\
+		att\\
+		ibm corporation\\
+		microft crpoation\\
+		goog\\
+		\bottomrule
+	\end{tabularx}
+	\captionof{table} {Documenti target}
+	\label{table:target}
+\end{minipage}
+\end{table}
+\\[1em]
+Il calcolo della distanza combinata è suddiviso in tre fasi. La prima fase consiste nel \textit{tokenizzare} e normalizzare (rendendo \textit{case insensitive}) tutti i documenti di reference e target. Viene poi calcolata la distanza di edit di ogni token dei documenti di reference da ogni token dei documenti target i cui risultati sono riportati in tabella \ref{table:edit_distance}.
+\begin{table}
+	\scriptsize
+	\centering
+	\begin{tabularx}{0.63\textwidth}{l | rrrrrr}
+		{} & {kongo} & {korea} & {milna} & {intrnazionale} & {torino} & {repubblica} \\
+		\midrule
+		{ibm} & {5.0} & {5.0} & {4.0} & {12.0} & {5.0} & {9.0} \\
+		{corporation} & {9.0} & {8.0} & {10.0} & {10.0} & {8.0} & {9.0} \\
+		{at\&t} & {5.0} & {5.0} & {5.0} & {12.0} & {6.0} & {10.0} \\
+		{corporation} & {9.0} & {8.0} & {10.0} & {10.0} & {8.0} & {9.0} \\
+		{microsoft} & {8.0} & {8.0} & {7.0} & {11.0} & {7.0} & {10.0} \\
+		{corporation} & {9.0} & {8.0} & {10.0} & {10.0} & {8.0} & {9.0} \\
+		{google} & {4.0} & {5.0} & {6.0} & {10.0} & {5.0} & {9.0} \\
+		{inc} & {4.0} & {5.0} & {3.0} & {11.0} & {4.0} & {9.0} \\
+		{repubblica} & {10.0} & {9.0} & {8.0} & {11.0} & {9.0} & {0.0} \\
+	\end{tabularx}
+	\captionof{table} {Estratto dell'output del calcolo della distanza di edit}
+	\label{table:edit_distance}
+\end{table}
+\\[1.8em]
+Dopo aver trovato la distanza per ogni coppia di token, viene calcolato il valore della funzione \textit{tf-idf} per ogni token di ogni documento di reference (tabella \ref{table:reference}) utilizzando la seguente formula:
+\begin{equation}
+(tf \mhyphen idf_{i,j}) = tf_{i,j} * idf_i
+\end{equation}
+Dove $ tf_{i,j} $ è calcolato dividendo il numero di volte in cui il token $i$ compare nel documento $j$ per la lunghezza in token del documento $j$:
+\begin{equation}
+tf_{i,j} = \frac{n_{i,j}}{|d_j|}
+\end{equation}
+Il valore $idf_i$ è pari al logarimo del rapporto tra il numero di documenti di reference e il numero di documenti di reference che contengono il token $i$:
+\begin{equation}
+idf_i = \log_2{\frac{|D|}{|\{d : i \in d\}|}}
+\end{equation}
+I risultati del calcolo della funzione \textit{tf-idf} per i documenti reference della tabella \ref{table:reference} sono riportati in tabella \ref{table:tfidf}.
+\begin{table}
+\scriptsize
+\centering
+	\begin{tabularx}{0.48\textwidth}{l | rrrrrr}
+		{} & {0} & {1} & {2} & {3} & {4} & {5} \\
+		\midrule
+		{ibm} & {1.66} & {0.00} & {0.00} & {0.00} & {0.00} & {0.00} \\
+		{corporation} & {0.87} & {0.87} & {0.87} & {0.00} & {0.00} & {0.00} \\
+		{at\&t} & {0.00} & {1.66} & {0.00} & {0.00} & {0.00} & {0.00} \\
+		{corporation} & {0.87} & {0.87} & {0.87} & {0.00} & {0.00} & {0.00} \\
+		{microsoft} & {0.00} & {0.00} & {1.66} & {0.00} & {0.00} & {0.00} \\
+		{corporation} & {0.87} & {0.87} & {0.87} & {0.00} & {0.00} & {0.00} \\
+		{google} & {0.00} & {0.00} & {0.00} & {1.66} & {0.00} & {0.00} \\
+		{inc} & {0.00} & {0.00} & {0.00} & {1.66} & {0.00} & {0.00} \\
+		{repubblica} & {0.00} & {0.00} & {0.00} & {0.00} & {0.43} & {0.43} \\
+	\end{tabularx}
+	\captionof{table} {Estratto dell'output del calcolo della funzione tf-idf}
+	\label{table:tfidf}
+\end{table}
+\\[1.8em]
+Infine, calcoliamo il valore della distanza di ogni documento target da ogni documento di reference facendo una somma pesata tra la distanza di edit di ogni token del target dal token di reference più vicino (escludendo i token reference già scelti in precedenza) moltiplicata per il valore di \textit{tf-idf} del token di reference scelto.
+\begin{equation}
+combined\_distance_{i,j} = \sum_{h \in tokens(i)} edit\_distance(h, k) * tf \mhyphen idf_{k,i}
+\end{equation}
+Dove $k$ è il token reference di distanza minima dal token $h$ senza considerare tutti i token di reference già utilizzati dai token $t<h$. Se il documento $i$ ha più token del documento di reference $j$, tutti i token in eccesso hanno peso 0.
+\\[1.8em]
+La distanza così calcolata è riportata in tabella \ref{table:combined}.
+\\[1.8em]
+\begin{table}[ht]
+	\centering	
+	\tiny
+	\setlength{\tabcolsep}{0.8em}
+	\begin{tabularx}{1.02\textwidth}{l | rrrrrrrrrr}
+		{} & {kongo} & {korea} & {milna} & {intrnazionale} & {torino} & {repubblica tedesca} & {atet} & {ibm corporation} & {microft crpoation} & {googe} \\
+		\midrule
+		{IBM Corporation} & {8.30} & {8.30} & {6.64} & {8.68} & {8.30} & {23.63} & {6.64} & \textcolor[HTML]{388E3C}{\textbf{1.74}} & {11.70} & {8.30} \\
+		{AT\&T Corporation} & {8.30} & {8.30} & {8.30} & {8.68} & {9.97} & {19.44} & \textcolor[HTML]{388E3C}{\textbf{1.66}} & {8.38} & {11.70} & {8.30} \\
+		{Microsoft Corporation} & {13.29} & {13.29} & {11.63} & {8.68} & {11.63} & {21.10} & {13.29} & {15.02} & \textcolor[HTML]{388E3C}{\textbf{5.06}} & {11.63} \\
+		{Google Inc} & {6.64} & {8.30} & {4.98} & {16.61} & {6.64} & {24.91} & {6.64} & {14.95} & {23.25} & \textcolor[HTML]{388E3C}{\textbf{1.66}} \\
+		{Repubblica Democratica del Congo} & \textcolor[HTML]{388E3C}{\textbf{0.83}} & {3.32} & {3.32} & {4.78} & {3.32} & {4.15} & {2.49} & {7.47} & {8.02} & {2.49} \\
+		{Repubblica Democratica di Corea} & {3.32} & \textcolor[HTML]{388E3C}{\textbf{0.83}} & {3.32} & {4.78} & {3.32} & {4.15} & {3.32} & {6.64} & {8.02} & {3.32} \\
+		{Repubblica Democratica Tedesca} & {7.75} & {5.54} & {6.64} & {6.37} & {6.64} & \textcolor[HTML]{388E3C}{\textbf{0.00}} & {6.64} & {12.38} & {11.80} & {7.75} \\
+		{Associazione Calcio Milan} & {5.54} & {3.87} & \textcolor[HTML]{388E3C}{\textbf{1.55}} & {8.86} & {5.54} & {15.38} & {5.54} & {11.95} & {10.51} & {3.87} \\
+		{Torino Football Club} & {4.43} & {4.43} & {3.10} & {11.07} & \textcolor[HTML]{388E3C}{\textbf{0.00}} & {12.84} & {3.10} & {10.85} & {12.84} & {5.54} \\
+		{Football Club Internazionale Milano} & {2.90} & {2.90} & {1.66} & \textcolor[HTML]{388E3C}{\textbf{0.83}} & {3.32} & {8.71} & {2.32} & {6.39} & {8.80} & {2.90} \\
+	\end{tabularx}
+	\captionof{table} {Distanza combinata}
+	\label{table:combined}
+\end{table}
+
+\pagebreak
+\paragraph{Pseudocodice}
+\begin{algorithmic}
+	\State $R\gets \textit{documenti reference}$
+	\State $T\gets \textit{documenti target}$
+	\State $combined\_distance\gets matrix(|R|,|T|)$
+	\ForAll{$i \in R$}
+		\ForAll{$j \in T$}
+			\State $ref\_tokens\gets tokens(i)$
+			\State $distance\gets 0$
+			\ForAll{$k \in tokens(j)$}
+				\State $h\gets\textit{token meno distante da  } k \textit{  in  } ref\_tokens$
+				\State $\textit{Rimuovi  } h \textit{  da  } ref\_tokens$
+				\State $distance\gets distance + edit\_distance(h, k) * tdidf[h, j]$
+			\EndFor
+			\State $combined\_distance[i, j]\gets distance$
+		\EndFor
+	\EndFor
+\end{algorithmic}
+
+\end{document}
+
+
+
+
+
+%%%% end of file -- test-draft.tex
